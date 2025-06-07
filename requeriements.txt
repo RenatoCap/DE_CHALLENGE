@@ -1,0 +1,5 @@
+azure-functions
+azure-storage-blob
+pandas
+psycopg2-binary
+sqlalchemys
