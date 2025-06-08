@@ -32,7 +32,6 @@ def execute_query(query_name, year, db_conn):
         cursor.execute(query)
         results = cursor.fetchall() 
         db_conn.commit()
-        cursor.close()
 
     except pyodbc.Error as ex:
         sqlstate = ex.args[0]
@@ -40,16 +39,19 @@ def execute_query(query_name, year, db_conn):
         if db_conn:
             db_conn.rollback()
             print(f"Transaction for query '{query_name}.sql' has been rolled back.")
+        raise ex
     except FileNotFoundError:
-        print(f"Error: SQL file '{query_name}.sql' not found at '{file_path}'.", exc_info=True)
+        raise f"Error: SQL file '{query_name}.sql' not found at '{file_path}'."
     except Exception as e:
         print(f"An unexpected error occurred while executing query '{query_name}.sql' for year {year}: {e}", exc_info=True)
         if db_conn:
             db_conn.rollback()
             print(f"Transaction for query '{query_name}.sql' has been rolled back due to an unexpected error.")
+        raise e
     finally:
         if cursor:
             cursor.close()
             print(f"Cursor for query '{query_name}.sql' closed.")
+            
     return results
     

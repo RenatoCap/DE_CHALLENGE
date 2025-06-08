@@ -33,7 +33,7 @@ def hello_world():
 
     if not year:
         return jsonify({
-            'error': 'Invalid input data or row count exceeds 1000',
+            'error': 'Parameter year is necessary',
             'code': 400
         })
     else:
@@ -74,7 +74,7 @@ def employees_hired():
 
     if not year:
         return jsonify({
-            'error': 'Invalid input data or row count exceeds 1000',
+            'error': 'Parameter year is necessary',
             'code': 400
         })
     else:
