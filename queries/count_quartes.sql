@@ -8,6 +8,6 @@ SELECT
 FROM [migration_tables].[hired_employees] h
 LEFT JOIN [migration_tables].[deparments] d ON d.id = h.department_id
 LEFT JOIN [migration_tables].[jobs] j ON j.id = h.job_id
-WHERE YEAR(h.hire_datetime) = 2021 AND h.hire_datetime IS NOT NULL
+WHERE YEAR(h.hire_datetime) = {year} AND h.hire_datetime IS NOT NULL
 GROUP BY d.name, j.job
 ORDER BY d.name, j.job;

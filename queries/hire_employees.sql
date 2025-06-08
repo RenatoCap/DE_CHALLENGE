@@ -22,6 +22,6 @@ FROM
 GROUP BY
     id, name
 HAVING
-    SUM(hired) > (SELECT AVG(hired) FROM Hirings WHERE year_hired = 2021)
+    SUM(hired) > (SELECT AVG(hired) FROM Hirings WHERE year_hired = {year})
 ORDER BY
     SUM(hired) DESC;
