@@ -241,7 +241,6 @@ if __name__ == "__main__":
                         help=f'Comma-separated list of column names to insert into DB.')
     args = parser.parse_args()
 
-    parsed_target_columns = [col.strip() for col in args.target_columns.split(',')]
-    parsed_insert_columns = [col.strip() for col in args.insert_columns.split(',')]
-
+    parsed_target_columns  = json.loads(args.target_columns)
+    parsed_insert_columns = json.loads(args.insert_columns)
     main(args.file_name, args.target_table_name, parsed_target_columns, parsed_insert_columns)
