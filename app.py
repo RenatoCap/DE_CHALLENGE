@@ -1,30 +1,144 @@
 import os
-
+import json
+import logging
+import pandas as pd
 
 from pathlib import Path
 from datetime import datetime
+from modules.table_rules.jobs import Job
 from flask import Flask, request, jsonify
 from modules.utils.execute_query import execute_query
+from modules.table_rules.department import Departments
+from modules.table_rules.hired_employees import HiredEmployees
 from modules.utils.db_connection import get_sql_server_connection
 
 
-LOG_FOLDER = os.path.join(Path(__file__).parent, 'log')
+LOG_FOLDER = os.path.join(Path(__file__).parent, 'log', 'rejected_api')
+
+rejected_rows_logger = logging.getLogger('rejected_rows_logger')
 
 app = Flask(__name__)
 
-
 @app.route('/api/v1/batch-insert', methods=['POST'])
 def batch_insert():
-    data = request.json()
-    table_name = data.get('table')
-    rows = data.get('row')
+    data = request.json
+    table_name = data['table_name']
+    rows = data['rows']
 
-    if not table_name or not rows or len(rows) > 100:
+    if not isinstance(data, dict):
         return jsonify({
-            'error': 'Invalid input data or row count exceeds 1000',
+            'error': 'Invalid JSON format. Expected a dictionary.',
+            'code': 400
+        }), 400
+    
+    table_name: str = data.get('table_name')
+    rows: list = data.get('rows')
+    if not table_name:
+        return jsonify({
+            'error': 'Missing "table_name" in request payload.',
+            'code': 400
+        }), 400
+    
+    if not rows:
+        return jsonify({
+            'error': 'Missing "rows" data in request payload.',
+            'code': 400
+        }), 400
+
+
+    if not isinstance(rows, list):
+        return jsonify({
+            'error': '"rows" field must be a list.',
+            'code': 400
+        }), 400
+    
+    BATCH_LIMIT = 1000
+    if len(rows) > BATCH_LIMIT:
+        return jsonify({
+            'error': f'Row count exceeds the limit of {BATCH_LIMIT}.',
+            'code': 400
+        }), 400
+    
+    if table_name == 'jobs':
+        validator = Job(rows)
+
+    elif table_name == 'departments':
+        validator = Departments(rows)
+
+    elif table_name == 'hired_employees':
+        validator = HiredEmployees(rows)
+
+    else:
+        return jsonify({
+            'error': f'Table name "{table_name}" not recognized or supported by the system.',
             'code': 400
         })
+    
+    insert_columns = validator.insert_columns
+    accepted, rejected = validator.validate_schema()
+
+    if not rejected_rows_logger.handlers:
+        file_handler = logging.FileHandler(os.path.join(LOG_FOLDER, f'rejected_{table_name}_{datetime.now().strftime("%Y_%m_%d_%I_%M_%S")}.log'), mode='a', encoding='utf-8')
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        rejected_rows_logger.addHandler(file_handler)
+        rejected_rows_logger.setLevel(logging.WARNING)
+
+    if rejected:
+        for rejected_entry in rejected:
+            rejected_rows_logger.warning(json.dumps(rejected_entry, ensure_ascii=False))
+    
+    # --- Lógica de inserción en la base de datos ---
+    try:
+        db_conn = get_sql_server_connection()
+        cursor = db_conn.cursor()
         
+        placeholders = ', '.join(['?' for _ in insert_columns])
+        insert_sql = f"INSERT INTO migration_tables.{table_name} ({', '.join(insert_columns)}) VALUES ({placeholders})"
+        
+
+        df_accepted = pd.DataFrame(accepted)
+        if not df_accepted.empty:
+            data_to_insert = [tuple(row) for row in df_accepted[insert_columns].values]
+            cursor.executemany(insert_sql, data_to_insert)
+            db_conn.commit()
+            inserted_count = len(data_to_insert)
+        else:
+            db_conn.commit()
+            inserted_count = 0
+
+    except Exception as e:
+        if db_conn:
+            db_conn.rollback()
+        app.logger.error(f"Database insertion failed for table {table_name}: {e}", exc_info=True)
+        return jsonify({
+            'error': 'An error occurred during database insertion.',
+            'details': str(e),
+            'code': 500
+        }), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if db_conn:
+            db_conn.close()
+    
+    response_message = f"Batch insert processed. Accepted {inserted_count} rows, rejected {len(rejected)} rows."
+    if rejected:
+        response_message += " See logs/rejected_rows_YYYY_MM_DD.log for details on rejected rows."
+
+    return jsonify({
+        'status': 1,
+        'message': response_message,
+        'data': [{
+            'inserted': f"{inserted_count} rows",
+            'rejected': f"{len(rejected)} rows"
+        }],
+        'metadata': {
+            'version': '1.0.0',
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+    }), 200
+
 
 @app.route('/api/v1/employees-by-quarter', methods=['GET'])
 def hello_world():
@@ -80,7 +194,7 @@ def employees_hired():
     else:
         try:
             db_conn = get_sql_server_connection()
-            query_results = execute_query('hire_employees', year, db_conn)
+            query_results = execute_query('hired_employees', year, db_conn)
             formatted_results = []
             
             for row in query_results:

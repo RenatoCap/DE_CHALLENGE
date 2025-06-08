@@ -22,10 +22,8 @@ def execute_query(query_name, year, db_conn):
         queries_folder = os.path.join(Path(__file__).parents[2], 'queries')
         file_path = open(os.path.join(queries_folder, f"{query_name}.sql"))
 
-        with open(file_path, 'r') as file:
-            query = file.read()
-
-        query = query.replace("{year}", str(year))
+        file = open(os.path.join(queries_folder, f"{query_name}.sql"))
+        query = file.read().replace("{year}", f"{year}")
 
         # Execute the query.
         cursor = db_conn.cursor()
@@ -35,7 +33,7 @@ def execute_query(query_name, year, db_conn):
 
     except pyodbc.Error as ex:
         sqlstate = ex.args[0]
-        print(f"Database error executing query '{query_name}.sql' for year {year}. SQLSTATE: {sqlstate}, Error: {ex}", exc_info=True)
+        print(f"Database error executing query '{query_name}.sql' for year {year}. SQLSTATE: {sqlstate}, Error: {ex}")
         if db_conn:
             db_conn.rollback()
             print(f"Transaction for query '{query_name}.sql' has been rolled back.")
@@ -43,7 +41,7 @@ def execute_query(query_name, year, db_conn):
     except FileNotFoundError:
         raise f"Error: SQL file '{query_name}.sql' not found at '{file_path}'."
     except Exception as e:
-        print(f"An unexpected error occurred while executing query '{query_name}.sql' for year {year}: {e}", exc_info=True)
+        print(f"An unexpected error occurred while executing query '{query_name}.sql' for year {year}: {e}")
         if db_conn:
             db_conn.rollback()
             print(f"Transaction for query '{query_name}.sql' has been rolled back due to an unexpected error.")
