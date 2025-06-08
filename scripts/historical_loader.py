@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 rejected_rows_logger = logging.getLogger('rejected_rows_logger')
 if not rejected_rows_logger.handlers:
     # Use FileHandler to write to a separate file
-    file_handler = logging.FileHandler(os.path.join(LOG_FOLDER, 'rejected_hired_employees.log'), mode='a', encoding='utf-8')
+    file_handler = logging.FileHandler(os.path.join(LOG_FOLDER, 'historical_load/rejected_hired_employees.log'), mode='a', encoding='utf-8')
     formatter = logging.Formatter('%(asctime)s - %(message)s')
     file_handler.setFormatter(formatter)
     rejected_rows_logger.addHandler(file_handler)
