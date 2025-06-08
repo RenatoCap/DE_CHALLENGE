@@ -4,7 +4,6 @@ python historical_loader.py \
     --target_columns='["id", "job"]' \
     --insert_columns='["job"]'
 
-
 python historical_loader.py \
     --file_name=hired_employees.csv \
     --target_table_name=migration_tables.hired_employees \
