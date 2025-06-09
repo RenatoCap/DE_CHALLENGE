@@ -9,14 +9,14 @@ CONNECTION_PATH = os.path.join(Path(__file__).parents[2], 'config', 'connections
 LOG_FOLDER = os.path.join(Path(__file__).parents[2], 'log')
 
 # Load environment variables from the specified connections.env file.
-load_dotenv(CONNECTION_PATH) 
+# load_dotenv(CONNECTION_PATH) 
 
 # --- Database Credentials ---
-DB_SERVER = os.getenv("DB_SERVER")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_PORT = os.getenv("DB_PORT", "1433")
+DB_SERVER = os.environ.get("DB_SERVER")
+DB_NAME = os.environ.get("DB_NAME")
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_PORT = os.environ.get("DB_PORT", "1433")
 
 
 def get_sql_server_connection():

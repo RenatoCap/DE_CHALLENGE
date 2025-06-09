@@ -13,8 +13,8 @@ LOG_FOLDER = os.path.join(Path(__file__).parents[2], 'log')
 load_dotenv(CONNECTION_PATH) 
 
 # --- Azure Blob Storage Credentials ---
-BLOB_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-BLOB_CONTAINER_NAME = os.getenv("BLOB_CONTAINER_NAME_HISTORIC")
+BLOB_CONNECTION_STRING = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+BLOB_CONTAINER_NAME = os.environ.get("BLOB_CONTAINER_NAME_HISTORIC")
 
 
 def get_blob_service_client():
