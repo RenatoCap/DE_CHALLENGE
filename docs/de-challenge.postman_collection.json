@@ -1,0 +1,140 @@
+{
+	"info": {
+		"_postman_id": "22a3fb01-99e1-4d2f-a8d1-751e84eff136",
+		"name": "de-challenge",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30600757"
+	},
+	"item": [
+		{
+			"name": "batch-insert",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"departments\",\r\n    \"rows\": [\r\n        {\r\n            \"department\": \"Machine Learning\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "api-challenge-eufsf4fmaxg0b7fu.eastus2-01.azurewebsites.net/api/v1/batch-insert",
+					"host": [
+						"api-challenge-eufsf4fmaxg0b7fu",
+						"eastus2-01",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batch-insert"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "employees-by-quarter",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"year\": 2021\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "api-challenge-eufsf4fmaxg0b7fu.eastus2-01.azurewebsites.net/api/v1/employees-by-quarter?year=2021",
+					"host": [
+						"api-challenge-eufsf4fmaxg0b7fu",
+						"eastus2-01",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"api",
+						"v1",
+						"employees-by-quarter"
+					],
+					"query": [
+						{
+							"key": "year",
+							"value": "2021"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "employees-hired",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "api-challenge-eufsf4fmaxg0b7fu.eastus2-01.azurewebsites.net/api/v1/employees-hired?year=2021",
+					"host": [
+						"api-challenge-eufsf4fmaxg0b7fu",
+						"eastus2-01",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"api",
+						"v1",
+						"employees-hired"
+					],
+					"query": [
+						{
+							"key": "year",
+							"value": "2021"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "restore-table",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"hired_employees\",\r\n    \"avro_file_path_in_blob\": \"migration_tables/hired_employees/hired_employees_2025_06_08_17_44_32.avro\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "api-challenge-eufsf4fmaxg0b7fu.eastus2-01.azurewebsites.net/api/v1/restored-table",
+					"host": [
+						"api-challenge-eufsf4fmaxg0b7fu",
+						"eastus2-01",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"api",
+						"v1",
+						"restored-table"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
