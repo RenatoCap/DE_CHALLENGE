@@ -24,7 +24,7 @@ def get_sql_server_connection():
     Establishes and returns a connection to the SQL Server database.
 
     The connection string is built using environment variables to ensure secure
-    and flexible database access. Autocommit is set to False to allow for explicit
+    and flexible database access. Autocommit is set too False to allow for explicit
     transaction management (commit/rollback).
 
     :return: A pyodbc connection object if successful, None otherwise.

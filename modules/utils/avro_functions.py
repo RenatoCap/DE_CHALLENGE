@@ -2,6 +2,8 @@ def get_avro_schema_for_table(table_name):
     """
     Returns the predefined AVRO schema for a given table name.
     You'll need to expand this for all your tables.
+
+    :param table_name: Name of the table you want to get the schema for
     """
     schemas = {
         "departments": {

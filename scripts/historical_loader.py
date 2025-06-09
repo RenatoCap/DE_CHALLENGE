@@ -45,7 +45,8 @@ DB_PORT = os.getenv("DB_PORT", "1433")
 # --- Environment Variable Validation ---
 if not all([BLOB_CONNECTION_STRING, BLOB_CONTAINER_NAME, DB_SERVER, DB_NAME, DB_USER, DB_PASSWORD]):
     logger.error("ERROR: Please ensure all required environment variables are set.")
-    logger.error("Required: AZURE_STORAGE_CONNECTION_STRING, BLOB_CONTAINER_NAME_HISTORIC, DB_SERVER, DB_NAME, DB_USER, DB_PASSWORD")
+    logger.error("Required: AZURE_STORAGE_CONNECTION_STRING, BLOB_CONTAINER_NAME_HISTORIC, "
+                 "DB_SERVER, DB_NAME, DB_USER, DB_PASSWORD")
     exit(1)
 
 # --- Helper Functions ---
@@ -66,7 +67,7 @@ def get_sql_server_connection():
     Establishes and returns a connection to the SQL Server database.
 
     The connection string is built using environment variables to ensure secure
-    and flexible database access. Autocommit is set to False to allow for explicit
+    and flexible database access. Autocommit is set too False to allow for explicit
     transaction management (commit/rollback).
 
     :return: A pyodbc connection object if successful, None otherwise.
@@ -90,7 +91,11 @@ def get_sql_server_connection():
         logger.error(f"Failed to connect to the database: {e}", exc_info=True)
         return None
 
-def ingest_csv_to_db(csv_file_content: bytes, db_conn, table_name: str, target_columns: list, insert_columns: list) -> int:
+def ingest_csv_to_db(
+        csv_file_content: bytes,
+        db_conn, table_name: str,
+        target_columns: list,
+        insert_columns: list) -> int:
     """
     Reads the contents of a CSV file, processes it, and inserts valid rows into
     the specified SQL Server table.
@@ -127,7 +132,8 @@ def ingest_csv_to_db(csv_file_content: bytes, db_conn, table_name: str, target_c
             if col in df.columns:
                 combined_filter = combined_filter & df[col].notna()
             else:
-                logger.warning(f"The column '{col}' specified in INSERT_COLUMNS was not found in the DataFrame. The filter will not be applied for this column.")
+                logger.warning(f"The column '{col}' specified in INSERT_COLUMNS was not found in the DataFrame. "
+                               f"The filter will not be applied for this column.")
 
         # Separate DataFrame into filtered (valid) and rejected (invalid) rows.
         df_filtered = df[combined_filter].reset_index(drop=True).copy()
@@ -136,7 +142,8 @@ def ingest_csv_to_db(csv_file_content: bytes, db_conn, table_name: str, target_c
         rejected_rows_count = len(df_rejected)
 
         if rejected_rows_count > 0:
-            logger.warning(f"Se encontraron y descartaron {rejected_rows_count} filas debido a valores nulos en columnas clave. Consulta 'rejected_hired_employees.log'.")
+            logger.warning(f"They were found and discarded {rejected_rows_count} rows due to null values "
+                           f"in key columns. See 'rejected hired employees.log'")
             
             # Log each rejected row as a JSON object for easier parsing.
             for _, row in df_rejected.iterrows():
@@ -209,7 +216,12 @@ def main(file_name, target_table_name, target_columns, insert_columns):
                     blob_client = container_client.get_blob_client(blob.name)
                     download_stream = blob_client.download_blob().readall()
                     
-                    rows_ingested_from_file = ingest_csv_to_db(download_stream, db_conn, target_table_name, target_columns, insert_columns)
+                    rows_ingested_from_file = ingest_csv_to_db(
+                        download_stream,
+                        db_conn,
+                        target_table_name,
+                        target_columns,
+                        insert_columns)
                     total_rows_ingested += rows_ingested_from_file
                     total_files_processed += 1
                     
