@@ -1,19 +1,24 @@
 import os
 import json
+import pyodbc
 import logging
 import pandas as pd
 
 from pathlib import Path
 from datetime import datetime
 from modules.table_rules.jobs import Job
+from fastavro import reader
 from flask import Flask, request, jsonify
 from modules.utils.execute_query import execute_query
 from modules.table_rules.department import Departments
 from modules.table_rules.hired_employees import HiredEmployees
 from modules.utils.db_connection import get_sql_server_connection
+from modules.utils.avro_functions import get_avro_schema_for_table
+from modules.utils.blob_storage_connection import get_blob_service_client
 
 
 LOG_FOLDER = os.path.join(Path(__file__).parent, 'log', 'rejected_api')
+TEMP_DIR = os.path.join(Path(__file__).parents[0], 'tmp')
 
 rejected_rows_logger = logging.getLogger('rejected_rows_logger')
 
@@ -218,6 +223,78 @@ def employees_hired():
             if db_conn:
                 db_conn.rollback()
             raise
+
+
+@app.route('/api/v1/restored-table', methods=['POST'])
+def restored_table():
+    data = request.json
+    if not data:
+        return jsonify({
+            'error': 'No JSON payload provided.',
+            'code': 400
+        })
+
+    table_name = data['table_name']
+    avro_blob_path = data['avro_file_path_in_blob']
+
+    full_table_name_sql = f"migration_tables.{table_name}"
+    avro_schema = get_avro_schema_for_table(table_name)
+
+    os.makedirs(TEMP_DIR, exist_ok=True)
+
+    local_avro_path = os.path.join(TEMP_DIR, os.path.basename(avro_blob_path))
+    db_conn = None
+    container_client = None
+    temp_blob_service_client = get_blob_service_client()
+    container_client = temp_blob_service_client.get_container_client("backup")
+    blob_client = container_client.get_blob_client(avro_blob_path)
+    with open(local_avro_path, "wb") as download_file:
+        download_file.write(blob_client.download_blob().readall())
+
+    records = []
+    with open(local_avro_path, 'rb') as fo:
+        avro_reader = reader(fo)
+        for record in avro_reader:
+            records.append(record)
+        if not records:
+            return jsonify({"status": "warning", "message": "No records found in AVRO file, nothing restored."}), 200
+
+    db_conn = get_sql_server_connection()
+    cursor = db_conn.cursor()
+    avro_fields = [f['name'] for f in avro_schema['fields'] if f['name'] != 'id']
+    columns_sql = ", ".join([f"{col}" for col in avro_fields])
+    placeholders = ", ".join(["?"] * len(avro_fields))
+
+    try:
+        cursor.execute(f"TRUNCATE TABLE {full_table_name_sql}")
+        db_conn.commit()
+    except Exception as e:
+        db_conn.rollback()
+
+    insert_sql = f"INSERT INTO {full_table_name_sql} ({columns_sql}) VALUES ({placeholders})"
+    inserted_count = 0
+
+    for record in records:
+        values = [record.get(field_name) for field_name in avro_fields]
+        try:
+            cursor.execute(insert_sql, tuple(values))
+            inserted_count += 1
+        except pyodbc.Error as e:
+            db_conn.rollback()
+
+    db_conn.commit()
+    db_conn.close()
+    return jsonify({
+        'status': 1,
+        'message': "Success",
+        'data': [{
+            'inserted': f"{inserted_count} rows",
+        }],
+        'metadata': {
+            'version': '1.0.0',
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+    })
 
 
 if __name__ == '__main__':
