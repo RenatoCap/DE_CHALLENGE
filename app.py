@@ -5,9 +5,9 @@ import logging
 import pandas as pd
 
 from pathlib import Path
+from fastavro import reader
 from datetime import datetime
 from modules.table_rules.jobs import Job
-from fastavro import reader
 from flask import Flask, request, jsonify
 from modules.utils.execute_query import execute_query
 from modules.table_rules.department import Departments
@@ -49,7 +49,6 @@ def batch_insert():
             'error': 'Missing "rows" data in request payload.',
             'code': 400
         }), 400
-
 
     if not isinstance(rows, list):
         return jsonify({
@@ -284,6 +283,8 @@ def restored_table():
 
     db_conn.commit()
     db_conn.close()
+    os.remove(local_avro_path)
+
     return jsonify({
         'status': 1,
         'message': "Success",
@@ -298,4 +299,4 @@ def restored_table():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
