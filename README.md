@@ -7,6 +7,8 @@ This repository outlines my proposed solution for the data engineer challenge. A
 ## Solution
 Our envisioned cloud architecture, shown in the accompanying image, is built on a tech stack featuring a Flask REST API, Azure SQL Database, Azure Blob Storage for archiving CSV data, and Pandas for robust data processing and cleaning.
 
+![Proposed Architecture](docs/Proposed%20architecture.jpeg)
+
 The solution proposes the following services:
 * Azure Blob Storage for storing historical CSV files.
 * Azure SQL Database as the relational database, compatible with SQL Server.
